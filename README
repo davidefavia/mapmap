@@ -1,8 +1,10 @@
 YepMap
-------
+======
+
 single file google maps normal and reverse geocoding.
 
 Features
---------
+========
+
 * from address to coordinates
 * draggable marker
