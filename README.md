@@ -12,7 +12,6 @@ Features
 * Draggable marker for precise position
 * Suggestions for alternative addresses
 
-[License](yepmap/LICENSE)
+License
 =======
-
-This project is released under the "Do What the Fuck You Want Public License" license.
+This project is released under the **Do What the Fuck You Want Public License** license.
