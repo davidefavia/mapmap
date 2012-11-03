@@ -8,7 +8,7 @@ Draggable marker always shows right coordinates BUT only the closest addressable
 Features
 ========
 
-* Address to coordinates conversion
+* Address to coordinates convertion
 * Draggable marker for precise position
 * Suggestions for alternative addresses
 
