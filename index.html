@@ -1,1 +1,203 @@
-mapmap
+<!doctype html>
+<html>
+	<head>
+		<title>YepMap</title>
+		<script type="text/javascript"
+		  src="https://maps.googleapis.com/maps/api/js??v=3.9&sensor=false">
+		</script>
+		<style type="text/css">
+			html {
+				height: 100%;
+			}
+			body {
+				height: 100%;
+				margin: 0;
+				padding: 0;
+				position: relative;
+				font-family: Arial, sans-serif;
+				font-size: 12px;
+			}
+			#map {
+				height: 100%;
+			}
+			#layer {
+				position: absolute;
+				width: 680px;
+				padding: 10px;
+				background: rgba(255,255,255,.8);
+				border: 1px solid #ccc;
+				border-radius: 5px;
+				left:50%;
+				top:5px;
+				margin-left: -340px;
+				z-index: 200;
+			}
+			input[type="text"] {
+				border: 1px solid #ccc;
+				padding: 4px;
+			}
+			#address {
+				width: 400px;
+			}
+			#suggestions {
+
+			}
+		</style>
+		<script type="text/javascript">
+
+			var options = {
+				address: 'Milan, Italy'
+			}
+
+			Yep = function(opts) {
+
+				var $address = document.getElementById('address');
+				var $convert = document.getElementById('convert');
+				var $suggestions = document.getElementById('suggestions');
+				var fired = false;
+				var geocoder = new google.maps.Geocoder();
+				var info;
+				var map;
+				var me = this;
+				var options = opts;
+
+				var marker;
+
+
+				me.init = function() {
+					me.drawMap(options);
+					me.listeners();
+				}
+
+				me.drawMap = function() {
+					if(options.address) {
+						fired = false;
+						me.addressToCoordinates(options.address,function(point) {
+							map = new google.maps.Map(document.getElementById('map'),{
+								mapTypeId: google.maps.MapTypeId.ROADMAP,
+								zoom: 8,
+								center: point.position
+							});
+							me.setMarker(point);
+						})
+					}
+				}
+
+				me.listeners = function() {
+					$convert.addEventListener('click',function(e) {
+						e.preventDefault();
+						marker.setMap(null);
+						fired = false;
+						me.addressToCoordinates($address.value,me.setMarker)
+					})
+					$address.addEventListener('keydown',function(e) {
+						if(e.keyCode==13 || e.which==13) {
+							marker.setMap(null);
+							fired = false;
+							me.addressToCoordinates($address.value,me.setMarker)
+						}
+					}, false)
+				}
+
+				me.addressToCoordinates = function(address,callback) {
+					geocoder.geocode( { 'address': address}, function(results, status) {
+						if (status == google.maps.GeocoderStatus.OK) {
+							me.suggestions(results);
+							var r = results[0];
+							callback({
+								address: r.formatted_address,
+								position: r.geometry.location
+							})
+						} else {
+							alert("Geocode was not successful for the following reason: " + status);
+						}
+					});
+				}
+
+				me.coordinatesToAddress  = function(position,callback) {
+					geocoder.geocode( { 'latLng': position}, function(results, status) {
+						if (status == google.maps.GeocoderStatus.OK) {
+							me.suggestions([]);
+							var r = results[0];
+							callback({
+								address: r.formatted_address,
+								position: position
+							})
+						} else {
+							alert("Geocode was not successful for the following reason: " + status);
+						}
+					});
+				}
+
+				me.setMarker = function(p) {
+					$address.value = p.address;
+					map.setCenter(p.position);
+					marker = new google.maps.Marker();
+					marker.setMap(map);
+					marker.setPosition(map.getCenter())
+					marker.setDraggable(true);
+					marker.setTitle(p.address);
+					map.panTo(marker.getPosition());
+					info = new google.maps.InfoWindow({
+						content: '<strong>' + p.address + '</strong><br/>Latitude: ' + p.position.lat() + '<br/> Longitude: ' + p.position.lng()
+					});
+					info.open(map,marker);
+					if(!fired) {
+						fired = true;
+						google.maps.event.addListener(marker,'dragstart',function() {
+							info.close();
+						})
+						google.maps.event.addListener(marker,'dragend',function() {
+							marker.setMap(null);
+							fired = false;
+							me.coordinatesToAddress(marker.getPosition(),me.setMarker);
+						})
+					}
+				}
+
+				me.suggestions = function(results) {
+					if(results.length>1) {
+						var h = [];
+						h.push('Alternative addresses:');
+						h.push('<ul id="suggestions-list">');
+						for(i=1;l=results.length,i<l;i++) {
+							h.push('<li><a href="#" class="suggestion">'+results[i].formatted_address+'</a></li>');
+						}
+						h.push('</ul>');
+						$suggestions.innerHTML = h.join('');
+						var $ul = document.getElementById('suggestions-list');
+						var $a = $ul.getElementsByTagName('a')
+						for(i=0;l=$a.length,i<l;i++) {
+							$a[i].addEventListener('click',function(e) {
+								console.log(e.target)
+								$address.value = e.target.innerText;
+								marker.setMap(null);
+								fired = false;
+								me.addressToCoordinates($address.value,me.setMarker)
+							});
+						}
+					} else {
+						$suggestions.innerHTML = '';
+					}
+				}
+			}
+
+			google.maps.event.addDomListener(window, 'load', function() {
+				var App = new Yep(options);
+				App.init();
+			});
+
+		</script>
+	</head>
+
+	<body>
+		<div id="layer">
+			<div>
+				Address: <input type="text" value="" name="address" id="address" />
+				<a href="#" id="convert">Address to coordinates &raquo;</a>
+			</div>
+			<div id="suggestions"></div>
+		</div>
+		<div id="map"></div>
+	</body>
+</html>
