@@ -143,6 +143,9 @@
 						content: '<strong>' + p.address + '</strong><br/>Latitude: ' + p.position.lat() + '<br/> Longitude: ' + p.position.lng()
 					});
 					info.open(map,marker);
+					google.maps.event.addListener(marker,'click',function() {
+						info.open(map,marker);
+					})
 					if(!fired) {
 						fired = true;
 						google.maps.event.addListener(marker,'dragstart',function() {
